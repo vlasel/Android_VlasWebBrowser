@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">VlasWebBrowser</string>
+    <string name="btn_back">&lt;</string>
+    <string name="btn_forward">&gt;</string>
+    <string name="btn_go">GO</string>
+    <string name="address_hint">enter web address</string>
+    <string name="activity_history_title">Pages History</string>
+    <string name="msg_history_event">added to request\'s history</string>
+</resources>
