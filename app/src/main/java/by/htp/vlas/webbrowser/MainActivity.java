@@ -5,6 +5,7 @@ import static by.htp.vlas.webbrowser.HistoryActivity.HISTORY_ACTIVITY_URL_REQUES
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -51,6 +52,8 @@ public class MainActivity extends Activity {
     private final String URI_SCHEME_HTTP = "http://";
     private final String TEXT_ENCODING_NAME_DEF = "utf-8";
     private final String STATE_ADDRESS_KEY = "address";
+    private final String PREF_NAME = "web_browser_preferences";
+    private final String PREF_LAST_URL = "last_url";
     private final int HISTORY_ACTIVITY_URL_REQUEST = Math.abs("URL_REQUEST".hashCode());
 
     private HistoryStorage mHistoryStorage = new HistoryStorage();
@@ -68,15 +71,21 @@ public class MainActivity extends Activity {
 
         webViewInit();
 
-        handleIntent(getIntent());
+        boolean isExtRequest = handleExtRequestIntent(getIntent());
+
+        if(!isExtRequest && savedInstanceState == null) {
+            SharedPreferences preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+            String pUrl = preferences.getString(PREF_LAST_URL, null);
+            if(pUrl != null) {
+                loadUrl(pUrl);
+            }
+        }
+
     }
 
-    private void handleIntent(Intent pIntent) {
+    private boolean handleExtRequestIntent(Intent pIntent) {
         Log.d(TAG, "\nintent = " + pIntent);
-
-        if (pIntent == null) {
-            return;
-        }
+        boolean result = false;
         if (pIntent.getAction().equals(Intent.ACTION_VIEW)) {
             Uri data = pIntent.getData();
 
@@ -84,8 +93,10 @@ public class MainActivity extends Activity {
 
             if (data != null) {
                 loadUrl(data.toString());
+                result = true;
             }
         }
+        return result;
     }
 
     //----------------------- Save-Restore -------------------------------------------
@@ -102,6 +113,18 @@ public class MainActivity extends Activity {
         mWebView.restoreState(savedInstanceState);
         mAddressView.setText(savedInstanceState.getCharSequence(STATE_ADDRESS_KEY));
     }
+
+    @Override
+    protected void onDestroy() {
+        if(isFinishing()) {
+            SharedPreferences preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString(PREF_LAST_URL, mWebView.getUrl());
+            editor.apply();
+        }
+        super.onDestroy();
+    }
+
     //-----------------------/ Save-Restore -------------------------------------------
 
     @OnClick(R.id.btn_go)
